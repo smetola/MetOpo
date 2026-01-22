@@ -1,0 +1,62 @@
+{
+    "name": "OpositaGC",
+    "short_name": "OpositaGC",
+    "description": "Tu compañero de estudio para oposiciones de la Guardia Civil",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#121212",
+    "theme_color": "#4A7C59",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "icons/icon-72.svg",
+            "sizes": "72x72",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-96.svg",
+            "sizes": "96x96",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-128.svg",
+            "sizes": "128x128",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-144.svg",
+            "sizes": "144x144",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-152.svg",
+            "sizes": "152x152",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-192.svg",
+            "sizes": "192x192",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-384.svg",
+            "sizes": "384x384",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-512.svg",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        }
+    ],
+    "categories": ["education", "productivity"],
+    "lang": "es-ES"
+}
