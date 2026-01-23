@@ -49,20 +49,20 @@ const StudyPage = {
                         <div id="total-elapsed" style="display: ${state.isRunning && state.isPomodoroMode ? 'block' : 'none'}; margin-top: 16px; font-size: 14px; color: var(--color-text-secondary);">
                             Total: <span id="total-elapsed-time">00:00:00</span>
                         </div>
+                        
+                        <!-- Topic Selector (dentro de timer card) -->
+                        <div class="timer-topic-selector">
+                            <label class="timer-topic-label">Tema actual</label>
+                            <select class="input timer-topic-select" id="topic-select" ${state.isRunning ? 'disabled' : ''}>
+                                <option value="">Sin tema específico</option>
+                                ${this.topics.map(t => `
+                                    <option value="${t.id}" ${this.selectedTopicId === t.id ? 'selected' : ''}>
+                                        ${escapeHtml(t.name)}
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </div>
                     </div>
-                </div>
-
-                <!-- Topic Selector -->
-                <div class="card">
-                    <div class="card-title">TEMA ACTUAL</div>
-                    <select class="input" id="topic-select" ${state.isRunning ? 'disabled' : ''}>
-                        <option value="">Sin tema específico</option>
-                        ${this.topics.map(t => `
-                            <option value="${t.id}" ${this.selectedTopicId === t.id ? 'selected' : ''}>
-                                ${escapeHtml(t.name)}
-                            </option>
-                        `).join('')}
-                    </select>
                 </div>
 
                 <!-- Pomodoro Toggle -->

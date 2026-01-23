@@ -390,6 +390,36 @@ select.input {
     margin-top: var(--spacing-lg);
 }
 
+/* Timer Topic Selector - Integrado en el timer */
+.timer-topic-selector {
+    width: 100%;
+    max-width: 280px;
+    margin-top: var(--spacing-lg);
+}
+
+.timer-topic-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-hint);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.timer-topic-select {
+    font-size: 14px;
+    padding: 10px 14px;
+    text-align: center;
+    background-color: var(--color-surface-variant);
+    border: 1px solid transparent;
+}
+
+.timer-topic-select:focus {
+    border-color: var(--color-primary);
+}
+
 /* ═══════════════════════════════════════════════════════════
    PROGRESS BAR
 ═══════════════════════════════════════════════════════════ */
