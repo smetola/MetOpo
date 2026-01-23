@@ -1,6 +1,6 @@
 {
-    "name": "OpositaGC",
-    "short_name": "OpositaGC",
+    "name": "MetOpo",
+    "short_name": "MetOpo",
     "description": "Tu compañero de estudio para oposiciones de la Guardia Civil",
     "start_url": "/",
     "display": "standalone",
