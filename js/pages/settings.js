@@ -118,7 +118,7 @@ const SettingsPage = {
                 <div class="card">
                     <div class="card-title">ℹ️ ACERCA DE</div>
                     <p style="color: var(--color-text-secondary); font-size: 14px;">
-                        <strong>OpositaGC Web</strong><br>
+                        <strong>MetOpo Web</strong><br>
                         v1.0.0<br><br>
                         Tu compañero de estudio para oposiciones.<br>
                         Versión PWA que funciona en cualquier dispositivo.
@@ -253,7 +253,7 @@ const SettingsPage = {
     async exportData() {
         try {
             const data = await db.exportAllData();
-            const filename = `opositagc_backup_${getTodayString()}.json`;
+            const filename = `metopo_backup_${getTodayString()}.json`;
             downloadJSON(data, filename);
             showToast('Datos exportados correctamente', 'success');
         } catch (error) {

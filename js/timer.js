@@ -281,7 +281,7 @@ class StudyTimer {
         
         // Notificación del sistema (si está permitido)
         if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('OpositaGC', {
+            new Notification('MetOpo', {
                 body: message,
                 icon: '/icons/icon-192.svg',
                 badge: '/icons/icon-72.svg'
