@@ -59,35 +59,6 @@ const SettingsPage = {
                     </button>
                 </div>
 
-                <!-- Sound Settings -->
-                <div class="card">
-                    <div class="card-title">🔊 SONIDO</div>
-                    
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <div class="setting-title">Sonido activado</div>
-                            <div class="setting-description">Alarma al cambiar de fase en Pomodoro</div>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" id="switch-sound" ${prefs.soundEnabled ? 'checked' : ''}>
-                            <span class="switch-slider"></span>
-                        </label>
-                    </div>
-                    
-                    <div class="input-group" style="margin-top: 16px;">
-                        <label class="input-label">Volumen de alarma</label>
-                        <div class="slider-container">
-                            <input type="range" class="slider" id="alarm-volume" 
-                                   min="0" max="1" step="0.1" value="${prefs.alarmVolume}">
-                            <span class="slider-value" id="volume-value">${Math.round(prefs.alarmVolume * 100)}%</span>
-                        </div>
-                    </div>
-                    
-                    <button class="btn btn-secondary" style="width: 100%; margin-top: 8px;" id="btn-test-sound">
-                        🔔 Probar sonido
-                    </button>
-                </div>
-
                 <!-- Backup -->
                 <div class="card">
                     <div class="card-title">💾 COPIA DE SEGURIDAD</div>
@@ -151,25 +122,6 @@ const SettingsPage = {
             applyTheme(isDark);
         });
 
-        // Sound toggle
-        document.getElementById('switch-sound')?.addEventListener('change', (e) => {
-            setPreference('soundEnabled', e.target.checked);
-        });
-
-        // Volume slider
-        const volumeSlider = document.getElementById('alarm-volume');
-        const volumeValue = document.getElementById('volume-value');
-        volumeSlider?.addEventListener('input', (e) => {
-            const value = parseFloat(e.target.value);
-            volumeValue.textContent = `${Math.round(value * 100)}%`;
-            setPreference('alarmVolume', value);
-        });
-
-        // Test sound button
-        document.getElementById('btn-test-sound')?.addEventListener('click', () => {
-            this.testSound();
-        });
-
         // Save pomodoro settings
         document.getElementById('btn-save-pomo')?.addEventListener('click', () => {
             this.savePomodoroSettings();
@@ -213,38 +165,6 @@ const SettingsPage = {
         setPreference('pomodoroSessionsBeforeLongBreak', sessions);
         
         showToast('Configuración guardada', 'success');
-    },
-
-    /**
-     * Prueba el sonido de alarma usando Web Audio API
-     */
-    testSound() {
-        const prefs = getPreferences();
-        
-        try {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const duration = 0.5;
-            const frequency = 800;
-            
-            for (let i = 0; i < 3; i++) {
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.value = frequency + (i * 100);
-                oscillator.type = 'sine';
-                
-                gainNode.gain.setValueAtTime(prefs.alarmVolume * 0.3, audioContext.currentTime + i * 0.2);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + i * 0.2 + duration);
-                
-                oscillator.start(audioContext.currentTime + i * 0.2);
-                oscillator.stop(audioContext.currentTime + i * 0.2 + duration);
-            }
-        } catch (e) {
-            showToast('No se pudo reproducir el sonido', 'error');
-        }
     },
 
     /**

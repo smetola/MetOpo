@@ -325,6 +325,33 @@ class Database {
         });
     }
 
+    async getSessionById(id) {
+        return new Promise((resolve, reject) => {
+            const store = this.getStore(STORES.STUDY_SESSIONS);
+            const request = store.get(id);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async updateSession(session) {
+        return new Promise((resolve, reject) => {
+            const store = this.getStore(STORES.STUDY_SESSIONS, 'readwrite');
+            const request = store.put(session);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async deleteSession(id) {
+        return new Promise((resolve, reject) => {
+            const store = this.getStore(STORES.STUDY_SESSIONS, 'readwrite');
+            const request = store.delete(id);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
     // ═══════════════════════════════════════════════════════════
     // PLANNED TASKS DAO
     // ═══════════════════════════════════════════════════════════

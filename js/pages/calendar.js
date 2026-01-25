@@ -277,6 +277,12 @@ const CalendarPage = {
         
         const totalMinutes = sessions.reduce((sum, s) => sum + (s.durationMinutes || 0), 0);
         
+        // Formatear hora
+        const formatTime = (timestamp) => {
+            const d = new Date(timestamp);
+            return d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        };
+        
         const content = `
             <div class="modal-header">
                 <h2 class="modal-title">📆 ${formattedDate}</h2>
@@ -285,16 +291,20 @@ const CalendarPage = {
                 <!-- Sesiones de estudio -->
                 <div class="section-title">Sesiones de estudio</div>
                 ${sessions.length > 0 ? `
+                    <p style="color: var(--color-text-hint); font-size: 12px; margin-bottom: 8px;">
+                        💡 Toca una sesión para editarla
+                    </p>
                     ${sessions.map(s => `
-                        <div class="list-item" style="cursor: default;">
-                            <div class="list-item-content">
+                        <div class="list-item session-editable" data-session-id="${s.id}" style="cursor: pointer;">
+                            <div class="list-item-content" style="flex: 1;">
                                 <div class="list-item-title">
                                     ${s.topicId && topicNames[s.topicId] ? escapeHtml(topicNames[s.topicId]) : 'Sin tema'}
                                 </div>
                                 <div class="list-item-subtitle">
-                                    ${formatMinutes(s.durationMinutes)} ${s.isPomodoroSession ? '🍅' : ''}
+                                    ${formatTime(s.startTime)} - ${s.endTime ? formatTime(s.endTime) : 'en curso'} · ${formatMinutes(s.durationMinutes)} ${s.isPomodoroSession ? '🍅' : ''}
                                 </div>
                             </div>
+                            <span class="edit-icon" style="color: var(--color-text-hint); font-size: 18px;">✏️</span>
                         </div>
                     `).join('')}
                     <p style="margin-top: 8px; font-weight: 600; color: var(--color-primary);">
@@ -335,6 +345,15 @@ const CalendarPage = {
         
         showModal(content);
         
+        // Event listeners para editar sesiones
+        document.querySelectorAll('.session-editable').forEach(item => {
+            item.addEventListener('click', () => {
+                const sessionId = parseInt(item.getAttribute('data-session-id'));
+                hideModal();
+                this.showEditSessionDialog(sessionId, date);
+            });
+        });
+        
         document.getElementById('btn-add-past-study').onclick = () => {
             hideModal();
             this.showAddPastStudyDialog(date);
@@ -344,6 +363,170 @@ const CalendarPage = {
             hideModal();
             this.showAddTaskDialog(date);
         };
+    },
+
+    /**
+     * Muestra el diálogo para editar una sesión de estudio
+     */
+    async showEditSessionDialog(sessionId, date) {
+        const session = await db.getSessionById(sessionId);
+        if (!session) {
+            showToast('Sesión no encontrada', 'error');
+            return;
+        }
+        
+        const activeTopics = this.topics.filter(t => !t.isCompleted);
+        const currentTopic = this.topics.find(t => t.id === session.topicId);
+        
+        const hours = Math.floor(session.durationMinutes / 60);
+        const minutes = session.durationMinutes % 60;
+        
+        const formattedDate = formatDateFull(date);
+        
+        const content = `
+            <div class="modal-header">
+                <h2 class="modal-title">✏️ Editar sesión</h2>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--color-text-secondary); margin-bottom: 16px;">
+                    📅 ${formattedDate}
+                </p>
+                
+                <div class="input-group">
+                    <label class="input-label">Tema estudiado</label>
+                    <select class="input" id="edit-session-topic">
+                        <option value="">Sin tema</option>
+                        ${this.topics.map(t => `
+                            <option value="${t.id}" ${t.id === session.topicId ? 'selected' : ''}>
+                                ${escapeHtml(t.name)} ${t.isCompleted ? '(completado)' : ''}
+                            </option>
+                        `).join('')}
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 16px;">
+                    <div class="input-group" style="flex: 1;">
+                        <label class="input-label">Horas</label>
+                        <input type="number" class="input" id="edit-session-hours" min="0" max="23" value="${hours}" inputmode="numeric">
+                    </div>
+                    <div class="input-group" style="flex: 1;">
+                        <label class="input-label">Minutos</label>
+                        <input type="number" class="input" id="edit-session-minutes" min="0" max="59" value="${minutes}" inputmode="numeric">
+                    </div>
+                </div>
+                
+                <p style="color: var(--color-text-hint); font-size: 12px; margin-top: 8px;">
+                    💡 Los cambios se reflejarán en el tiempo total del tema y en las estadísticas
+                </p>
+            </div>
+            <div class="modal-footer" style="flex-wrap: wrap; gap: 8px;">
+                <button class="btn btn-danger" id="btn-delete-session" style="margin-right: auto;">
+                    🗑️ Eliminar
+                </button>
+                <button class="btn btn-text" onclick="hideModal()">Cancelar</button>
+                <button class="btn btn-primary" id="btn-save-session">Guardar</button>
+            </div>
+        `;
+        
+        showModal(content);
+        
+        document.getElementById('btn-save-session').onclick = async () => {
+            const newTopicId = document.getElementById('edit-session-topic').value;
+            const newHours = parseInt(document.getElementById('edit-session-hours').value) || 0;
+            const newMinutes = parseInt(document.getElementById('edit-session-minutes').value) || 0;
+            const newTotalMinutes = newHours * 60 + newMinutes;
+            
+            if (newTotalMinutes <= 0) {
+                showToast('El tiempo debe ser mayor que 0', 'error');
+                return;
+            }
+            
+            await this.updateSession(session, newTopicId ? parseInt(newTopicId) : null, newTotalMinutes);
+            hideModal();
+        };
+        
+        document.getElementById('btn-delete-session').onclick = () => {
+            hideModal();
+            this.confirmDeleteSession(session);
+        };
+    },
+
+    /**
+     * Actualiza una sesión de estudio y ajusta los tiempos acumulados
+     */
+    async updateSession(session, newTopicId, newDurationMinutes) {
+        try {
+            const oldTopicId = session.topicId;
+            const oldDuration = session.durationMinutes;
+            const durationDiff = newDurationMinutes - oldDuration;
+            
+            // Si cambió el tema, actualizar ambos temas
+            if (oldTopicId !== newTopicId) {
+                // Restar del tema antiguo
+                if (oldTopicId) {
+                    await db.addStudyMinutesToTopic(oldTopicId, -oldDuration);
+                }
+                // Sumar al tema nuevo
+                if (newTopicId) {
+                    await db.addStudyMinutesToTopic(newTopicId, newDurationMinutes);
+                }
+            } else if (durationDiff !== 0 && newTopicId) {
+                // Solo cambió la duración, ajustar en el mismo tema
+                await db.addStudyMinutesToTopic(newTopicId, durationDiff);
+            }
+            
+            // Actualizar la sesión
+            session.topicId = newTopicId;
+            session.durationMinutes = newDurationMinutes;
+            // Ajustar endTime basándose en la nueva duración
+            session.endTime = session.startTime + (newDurationMinutes * 60 * 1000);
+            
+            await db.updateSession(session);
+            
+            showToast('Sesión actualizada', 'success');
+            App.loadPage('calendar');
+            
+        } catch (error) {
+            console.error('Error updating session:', error);
+            showToast('Error al actualizar sesión', 'error');
+        }
+    },
+
+    /**
+     * Confirma y elimina una sesión de estudio
+     */
+    confirmDeleteSession(session) {
+        showConfirm(
+            'Eliminar sesión',
+            `¿Eliminar esta sesión de ${formatMinutes(session.durationMinutes)}? El tiempo se restará del tema y las estadísticas.`,
+            async () => {
+                await this.deleteSession(session);
+            },
+            'Eliminar',
+            'Cancelar'
+        );
+    },
+
+    /**
+     * Elimina una sesión de estudio y ajusta los tiempos
+     */
+    async deleteSession(session) {
+        try {
+            // Restar tiempo del tema
+            if (session.topicId) {
+                await db.addStudyMinutesToTopic(session.topicId, -session.durationMinutes);
+            }
+            
+            // Eliminar la sesión
+            await db.deleteSession(session.id);
+            
+            showToast('Sesión eliminada', 'success');
+            App.loadPage('calendar');
+            
+        } catch (error) {
+            console.error('Error deleting session:', error);
+            showToast('Error al eliminar sesión', 'error');
+        }
     },
 
     /**

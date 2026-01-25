@@ -118,6 +118,7 @@ html {
 .app-header {
     padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-md);
     background-color: var(--color-background);
+    position: relative;
 }
 
 .app-title {
@@ -125,12 +126,39 @@ html {
     font-weight: 700;
     color: var(--color-primary);
     letter-spacing: -0.5px;
+    transition: font-size var(--transition-fast);
+}
+
+.app-title.small {
+    font-size: 20px;
 }
 
 .app-subtitle {
     font-size: 14px;
     color: var(--color-text-hint);
     margin-top: 4px;
+}
+
+.header-settings-btn {
+    position: absolute;
+    top: var(--spacing-lg);
+    right: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-full);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.header-settings-btn:hover,
+.header-settings-btn:active {
+    background-color: var(--color-surface-variant);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -248,6 +276,15 @@ html {
 
 .btn-secondary:hover, .btn-secondary:active {
     background-color: #E0E0E0;
+}
+
+.btn-danger {
+    background-color: var(--color-error);
+    color: white;
+}
+
+.btn-danger:hover, .btn-danger:active {
+    background-color: #9C1F18;
 }
 
 .btn-text {

@@ -67,7 +67,6 @@ const App = {
      */
     async loadPage(pageName) {
         const mainContent = document.getElementById('main-content');
-        const headerTitle = document.getElementById('header-title');
         
         if (!mainContent) return;
         
@@ -86,36 +85,55 @@ const App = {
         try {
             let html = '';
             let title = '';
+            let showSubtitle = true;
+            let showSettingsBtn = false;
+            let smallTitle = false;
             
             switch (pageName) {
                 case 'study':
-                    title = 'Estudio';
+                    title = 'MetOpo';
+                    showSubtitle = true;
+                    showSettingsBtn = true;
                     html = await StudyPage.render();
                     break;
                 case 'topics':
-                    title = 'Temas';
+                    title = 'MetOpo';
+                    showSubtitle = false;
+                    smallTitle = true;
                     html = await TopicsPage.render();
                     break;
                 case 'calendar':
-                    title = 'Calendario';
+                    title = 'MetOpo';
+                    showSubtitle = false;
+                    smallTitle = true;
                     html = await CalendarPage.render();
-                    break;
-                case 'stats':
-                    title = 'Estadísticas';
-                    html = await StatsPage.render();
                     break;
                 case 'settings':
                     title = 'Ajustes';
+                    showSubtitle = false;
                     html = await SettingsPage.render();
                     break;
                 default:
-                    title = 'Estudio';
+                    title = 'MetOpo';
+                    showSubtitle = true;
+                    showSettingsBtn = true;
                     html = await StudyPage.render();
             }
             
-            // Actualizar título
-            if (headerTitle) {
-                headerTitle.textContent = title;
+            // Actualizar header
+            const appTitle = document.getElementById('app-title');
+            const appSubtitle = document.getElementById('app-subtitle');
+            const settingsBtn = document.getElementById('btn-header-settings');
+            
+            if (appTitle) {
+                appTitle.textContent = title;
+                appTitle.classList.toggle('small', smallTitle);
+            }
+            if (appSubtitle) {
+                appSubtitle.style.display = showSubtitle ? 'block' : 'none';
+            }
+            if (settingsBtn) {
+                settingsBtn.style.display = showSettingsBtn ? 'flex' : 'none';
             }
             
             // Renderizar contenido
@@ -141,6 +159,12 @@ const App = {
      * Inicializa los eventos de la página actual
      */
     initCurrentPage(pageName) {
+        // Configurar botón de ajustes en header
+        const settingsBtn = document.getElementById('btn-header-settings');
+        if (settingsBtn) {
+            settingsBtn.onclick = () => this.loadPage('settings');
+        }
+        
         switch (pageName) {
             case 'study':
                 StudyPage.init();
@@ -150,9 +174,6 @@ const App = {
                 break;
             case 'calendar':
                 CalendarPage.init();
-                break;
-            case 'stats':
-                StatsPage.init();
                 break;
             case 'settings':
                 SettingsPage.init();
