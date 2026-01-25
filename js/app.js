@@ -85,55 +85,77 @@ const App = {
         try {
             let html = '';
             let title = '';
+            let subtitle = '';
             let showSubtitle = true;
             let showSettingsBtn = false;
             let smallTitle = false;
+            let hideHeader = false;
             
             switch (pageName) {
                 case 'study':
                     title = 'MetOpo';
+                    subtitle = 'Tu compañero de estudio';
                     showSubtitle = true;
                     showSettingsBtn = true;
                     html = await StudyPage.render();
                     break;
                 case 'topics':
-                    title = 'MetOpo';
-                    showSubtitle = false;
-                    smallTitle = true;
+                    title = 'Temas';
+                    subtitle = 'Gestiona tu temario';
+                    showSubtitle = true;
+                    smallTitle = false;
                     html = await TopicsPage.render();
                     break;
                 case 'calendar':
-                    title = 'MetOpo';
-                    showSubtitle = false;
-                    smallTitle = true;
+                    hideHeader = true;
                     html = await CalendarPage.render();
                     break;
                 case 'settings':
                     title = 'Ajustes';
                     showSubtitle = false;
+                    showSettingsBtn = true;  // Mostrar botón (será X en settings)
                     html = await SettingsPage.render();
                     break;
                 default:
                     title = 'MetOpo';
+                    subtitle = 'Tu compañero de estudio';
                     showSubtitle = true;
                     showSettingsBtn = true;
                     html = await StudyPage.render();
             }
             
             // Actualizar header
+            const appHeader = document.getElementById('app-header');
             const appTitle = document.getElementById('app-title');
             const appSubtitle = document.getElementById('app-subtitle');
             const settingsBtn = document.getElementById('btn-header-settings');
             
+            if (appHeader) {
+                appHeader.style.display = hideHeader ? 'none' : 'block';
+            }
+            if (mainContent) {
+                mainContent.classList.toggle('no-header', hideHeader);
+            }
             if (appTitle) {
                 appTitle.textContent = title;
                 appTitle.classList.toggle('small', smallTitle);
             }
             if (appSubtitle) {
+                appSubtitle.textContent = subtitle;
                 appSubtitle.style.display = showSubtitle ? 'block' : 'none';
             }
             if (settingsBtn) {
                 settingsBtn.style.display = showSettingsBtn ? 'flex' : 'none';
+                // Cambiar icono según la página
+                if (pageName === 'settings') {
+                    settingsBtn.innerHTML = '✕';
+                    settingsBtn.style.fontSize = '24px';
+                    settingsBtn.title = 'Cerrar ajustes';
+                } else {
+                    settingsBtn.innerHTML = '⚙️';
+                    settingsBtn.style.fontSize = '20px';
+                    settingsBtn.title = 'Ajustes';
+                }
             }
             
             // Renderizar contenido
@@ -159,10 +181,17 @@ const App = {
      * Inicializa los eventos de la página actual
      */
     initCurrentPage(pageName) {
-        // Configurar botón de ajustes en header
+        // Configurar botón de ajustes/cerrar en header
         const settingsBtn = document.getElementById('btn-header-settings');
         if (settingsBtn) {
-            settingsBtn.onclick = () => this.loadPage('settings');
+            settingsBtn.onclick = () => {
+                // Si estamos en settings, volver a study; si no, ir a settings
+                if (pageName === 'settings') {
+                    this.loadPage('study');
+                } else {
+                    this.loadPage('settings');
+                }
+            };
         }
         
         switch (pageName) {

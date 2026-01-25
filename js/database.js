@@ -111,7 +111,18 @@ class Database {
             const store = this.getStore(STORES.TOPICS);
             const request = store.getAll();
             request.onsuccess = () => {
-                const topics = request.result.sort((a, b) => b.createdAt - a.createdAt);
+                // Ordenar por sortOrder (si existe) y luego por createdAt
+                const topics = request.result.sort((a, b) => {
+                    // Si ambos tienen sortOrder, ordenar por él
+                    if (a.sortOrder !== undefined && b.sortOrder !== undefined) {
+                        return a.sortOrder - b.sortOrder;
+                    }
+                    // Si solo uno tiene sortOrder, ese va primero
+                    if (a.sortOrder !== undefined) return -1;
+                    if (b.sortOrder !== undefined) return 1;
+                    // Si ninguno tiene sortOrder, ordenar por createdAt (más reciente primero)
+                    return b.createdAt - a.createdAt;
+                });
                 resolve(topics);
             };
             request.onerror = () => reject(request.error);
@@ -181,6 +192,20 @@ class Database {
         if (topic) {
             topic.isCompleted = completed;
             await this.updateTopic(topic);
+        }
+    }
+
+    /**
+     * Actualiza el orden de los temas
+     * @param {Array} orderedIds - Array de IDs de temas en el nuevo orden
+     */
+    async updateTopicsOrder(orderedIds) {
+        for (let i = 0; i < orderedIds.length; i++) {
+            const topic = await this.getTopicById(orderedIds[i]);
+            if (topic) {
+                topic.sortOrder = i;
+                await this.updateTopic(topic);
+            }
         }
     }
 
