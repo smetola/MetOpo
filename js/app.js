@@ -161,12 +161,12 @@ const App = {
                 settingsBtn.style.display = showSettingsBtn ? 'flex' : 'none';
                 // Cambiar icono según la página
                 if (pageName === 'settings') {
-                    settingsBtn.innerHTML = '✕';
-                    settingsBtn.style.fontSize = '24px';
+                    settingsBtn.innerHTML = getIcon('close');
+                    settingsBtn.style.fontSize = ''; // Reset font size
                     settingsBtn.title = 'Cerrar ajustes';
                 } else {
-                    settingsBtn.innerHTML = '⚙️';
-                    settingsBtn.style.fontSize = '20px';
+                    settingsBtn.innerHTML = getIcon('settings');
+                    settingsBtn.style.fontSize = ''; // Reset font size
                     settingsBtn.title = 'Ajustes';
                 }
             }
