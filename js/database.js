@@ -131,7 +131,32 @@ class Database {
 
     async getActiveTopics() {
         const topics = await this.getAllTopics();
-        return topics.filter(t => !t.isCompleted);
+        return topics.filter(t => !t.isCompleted && !t.isArchived);
+    }
+
+    async getArchivedTopics() {
+        const topics = await this.getAllTopics();
+        return topics.filter(t => t.isArchived);
+    }
+
+    async getAllTopicsIncludingArchived() {
+        return await this.getAllTopics();
+    }
+
+    async setTopicArchived(topicId, archived) {
+        const topic = await this.getTopicById(topicId);
+        if (topic) {
+            topic.isArchived = archived;
+            await this.updateTopic(topic);
+        }
+    }
+
+    async resetTopicCurrentPeriod(topicId) {
+        const topic = await this.getTopicById(topicId);
+        if (topic) {
+            topic.currentPeriodStudyMinutes = 0;
+            await this.updateTopic(topic);
+        }
     }
 
     async getTopicById(id) {
@@ -150,7 +175,9 @@ class Database {
                 ...topic,
                 createdAt: topic.createdAt || Date.now(),
                 isCompleted: topic.isCompleted || false,
+                isArchived: topic.isArchived || false,
                 totalStudyMinutes: topic.totalStudyMinutes || 0,
+                currentPeriodStudyMinutes: topic.currentPeriodStudyMinutes || 0,
                 description: topic.description || '',
                 monthlyGoalHours: topic.monthlyGoalHours || null,
                 goalYearMonth: topic.goalYearMonth || null
@@ -183,6 +210,7 @@ class Database {
         const topic = await this.getTopicById(topicId);
         if (topic) {
             topic.totalStudyMinutes = (topic.totalStudyMinutes || 0) + minutes;
+            topic.currentPeriodStudyMinutes = (topic.currentPeriodStudyMinutes || 0) + minutes;
             await this.updateTopic(topic);
         }
     }

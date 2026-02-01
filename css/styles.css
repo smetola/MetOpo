@@ -1250,7 +1250,7 @@ select.input {
     color: var(--color-on-primary);
     box-shadow: var(--shadow-lg);
     transform: rotate(2deg);
-    transition: transform 0.1s ease;
+    transition: transform 0.1s ease, background-color 0.15s ease;
     border-radius: var(--radius-md);
     padding: var(--spacing-sm) var(--spacing-md);
 }
@@ -1278,6 +1278,11 @@ select.input {
     transform: rotate(2deg) scale(0.9);
 }
 
+.drag-clone.over-archive {
+    background-color: var(--color-primary-dark);
+    transform: rotate(-2deg) scale(1.05);
+}
+
 /* Placeholder donde irá el item */
 .drag-placeholder {
     background: repeating-linear-gradient(
@@ -1302,50 +1307,175 @@ select.input {
     overflow: hidden;
 }
 
-/* Zona de eliminación */
-.delete-zone {
+/* Zona de eliminación - Papelera pequeña */
+.delete-zone-small {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 80px;
-    background: linear-gradient(to bottom, transparent, var(--color-error));
+    bottom: calc(var(--nav-height) + var(--safe-area-bottom) + 12px);
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-md);
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    transform: translateY(100%);
-    transition: transform 0.2s ease, background 0.2s ease;
     z-index: 9998;
     pointer-events: none;
+    opacity: 0;
+    transition: transform 0.2s ease, opacity 0.2s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.delete-zone.visible {
-    transform: translateY(0);
+.delete-zone-small svg {
+    fill: var(--color-error);
+    transition: transform 0.15s ease;
 }
 
-.delete-zone.active {
-    background: var(--color-error);
-    height: 100px;
+.delete-zone-small.visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
 }
 
-.delete-zone-icon {
-    font-size: 24px;
-    transition: transform 0.2s ease;
+.delete-zone-small.active {
+    background-color: rgba(179, 38, 30, 0.15);
+    box-shadow: 0 0 0 8px rgba(179, 38, 30, 0.3), var(--shadow-lg);
+    transform: translateX(-50%) translateY(0) scale(1.2);
 }
 
-.delete-zone.active .delete-zone-icon {
+.delete-zone-small.active svg {
+    transform: scale(1.1);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TOPICS HEADER PERSONALIZADO
+═══════════════════════════════════════════════════════════ */
+.topics-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-sm) 0 var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+}
+
+.topics-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    text-align: center;
+    flex: 1;
+}
+
+.header-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-full);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color var(--transition-fast), color var(--transition-fast), transform 0.15s ease;
+}
+
+.header-btn:hover,
+.header-btn:active {
+    background-color: var(--color-surface-variant);
+}
+
+.header-btn.drag-over {
+    background-color: rgba(74, 124, 89, 0.2);
+    color: var(--color-primary);
     transform: scale(1.3);
 }
 
-.delete-zone-text {
-    color: white;
-    font-size: 12px;
-    font-weight: 500;
-    opacity: 0;
-    transition: opacity 0.2s ease;
+/* ═══════════════════════════════════════════════════════════
+   STATS VIEW
+═══════════════════════════════════════════════════════════ */
+.stats-view {
+    animation: fadeIn 0.2s ease;
 }
 
-.delete-zone.active .delete-zone-text {
-    opacity: 1;
+.stats-summary {
+    padding: var(--spacing-lg);
+}
+
+.stats-summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid var(--color-surface-variant);
+}
+
+.stats-summary-item:last-child {
+    border-bottom: none;
+}
+
+.stats-label {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+}
+
+.stats-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.stats-value-small {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text-hint);
+}
+
+.stats-topics-list {
+    background-color: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+}
+
+.stats-topic-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--color-surface-variant);
+}
+
+.stats-topic-item:last-child {
+    border-bottom: none;
+}
+
+.stats-topic-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    flex: 1;
+}
+
+.stats-topic-times {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.stats-topic-total {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.stats-topic-cycle {
+    font-size: 11px;
+    color: var(--color-text-hint);
+}
+
+/* Legacy delete-zone (mantener compatibilidad) */
+.delete-zone {
+    display: none;
+}

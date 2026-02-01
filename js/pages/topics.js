@@ -5,6 +5,9 @@
 const TopicsPage = {
     topics: [],
     
+    // View mode control
+    currentViewMode: 'TOPICS', // TOPICS, ARCHIVED, STATS
+    
     // Drag and drop state
     isDragging: false,
     draggedElement: null,
@@ -15,7 +18,9 @@ const TopicsPage = {
     touchStartX: 0,
     initialIndex: -1,
     deleteZone: null,
+    archiveButton: null,
     isOverDeleteZone: false,
+    isOverArchiveZone: false,
 
     /**
      * Renderiza la página de temas
@@ -23,15 +28,40 @@ const TopicsPage = {
     async render() {
         await this.loadTopics();
         
-        if (this.topics.length === 0) {
+        // Header personalizado con botones
+        const header = `
+            <div class="topics-header">
+                <button class="header-btn" id="btn-stats" title="Estadísticas">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+                    </svg>
+                </button>
+                <h2 class="topics-title" id="topics-title">Temas</h2>
+                <button class="header-btn" id="btn-archive" title="Archivados">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                        <path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z"/>
+                    </svg>
+                </button>
+            </div>
+        `;
+        
+        if (this.topics.length === 0 && this.currentViewMode === 'TOPICS') {
             return `
                 <div class="page-content">
+                    ${header}
                     <div class="empty-state">
                         <svg class="empty-state-icon" viewBox="0 0 24 24">
                             <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9h-4v4h-2v-4H9V9h4V5h2v4h4v2z"/>
                         </svg>
                         <h3 class="empty-state-title">No hay temas</h3>
                         <p class="empty-state-text">Añade temas para organizar tu estudio</p>
+                    </div>
+                    
+                    <!-- Zona de eliminación (papelera pequeña) -->
+                    <div id="delete-zone" class="delete-zone-small">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                        </svg>
                     </div>
                     
                     <button class="fab" id="fab-add-topic">
@@ -43,21 +73,105 @@ const TopicsPage = {
         
         const currentYearMonth = getCurrentYearMonth();
         
-        return `
-            <div class="page-content">
+        // Render según el modo de vista
+        let content = '';
+        
+        if (this.currentViewMode === 'STATS') {
+            content = this.renderStatsView();
+        } else {
+            content = `
                 <div id="topics-list">
                     ${this.topics.map(topic => this.renderTopicItem(topic, currentYearMonth)).join('')}
                 </div>
+            `;
+            
+            if (this.topics.length === 0) {
+                const emptyTitle = this.currentViewMode === 'ARCHIVED' ? 'Sin temas archivados' : 'No hay temas';
+                const emptyText = this.currentViewMode === 'ARCHIVED' ? 'Arrastra temas aquí para guardarlos' : 'Añade temas para organizar tu estudio';
+                content = `
+                    <div class="empty-state">
+                        <svg class="empty-state-icon" viewBox="0 0 24 24">
+                            <path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z"/>
+                        </svg>
+                        <h3 class="empty-state-title">${emptyTitle}</h3>
+                        <p class="empty-state-text">${emptyText}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // FAB solo en modo TOPICS
+        const fabHtml = this.currentViewMode === 'TOPICS' ? `
+            <button class="fab" id="fab-add-topic">
+                ${getIcon('add')}
+            </button>
+        ` : '';
+        
+        return `
+            <div class="page-content">
+                ${header}
+                ${content}
                 
-                <!-- Zona de eliminación (aparece al arrastrar) -->
-                <div id="delete-zone" class="delete-zone">
-                    <span class="delete-zone-icon">🗑️</span>
-                    <span class="delete-zone-text">Soltar para eliminar</span>
+                <!-- Zona de eliminación (papelera pequeña) -->
+                <div id="delete-zone" class="delete-zone-small">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                    </svg>
                 </div>
                 
-                <button class="fab" id="fab-add-topic">
-                    ${getIcon('add')}
-                </button>
+                ${fabHtml}
+            </div>
+        `;
+    },
+    
+    /**
+     * Renderiza la vista de estadísticas
+     */
+    renderStatsView() {
+        const allTopics = this.allTopicsForStats || [];
+        
+        const totalHistorico = allTopics.reduce((sum, t) => sum + (t.totalStudyMinutes || 0), 0);
+        const totalCiclo = allTopics.reduce((sum, t) => sum + (t.currentPeriodStudyMinutes || 0), 0);
+        const temasActivos = allTopics.filter(t => !t.isArchived).length;
+        const temasArchivados = allTopics.filter(t => t.isArchived).length;
+        
+        const sortedTopics = [...allTopics].sort((a, b) => (b.totalStudyMinutes || 0) - (a.totalStudyMinutes || 0));
+        
+        return `
+            <div class="stats-view">
+                <div class="stats-summary card">
+                    <div class="stats-summary-item">
+                        <span class="stats-label">Total histórico</span>
+                        <span class="stats-value">${formatMinutes(totalHistorico)}</span>
+                    </div>
+                    ${totalCiclo > 0 ? `
+                        <div class="stats-summary-item">
+                            <span class="stats-label">Ciclo actual</span>
+                            <span class="stats-value">${formatMinutes(totalCiclo)}</span>
+                        </div>
+                    ` : ''}
+                    <div class="stats-summary-item">
+                        <span class="stats-label">Temas</span>
+                        <span class="stats-value-small">${temasActivos} activos · ${temasArchivados} archivados</span>
+                    </div>
+                </div>
+                
+                <h3 class="section-title">Todos los temas</h3>
+                <div class="stats-topics-list">
+                    ${sortedTopics.map(topic => `
+                        <div class="stats-topic-item">
+                            <div class="stats-topic-name">
+                                ${escapeHtml(topic.name)}${topic.isArchived ? ' 📦' : ''}
+                            </div>
+                            <div class="stats-topic-times">
+                                <span class="stats-topic-total">${formatMinutes(topic.totalStudyMinutes || 0)}</span>
+                                ${(topic.currentPeriodStudyMinutes || 0) > 0 && topic.currentPeriodStudyMinutes !== topic.totalStudyMinutes ? `
+                                    <span class="stats-topic-cycle">Ciclo: ${formatMinutes(topic.currentPeriodStudyMinutes)}</span>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
             </div>
         `;
     },
@@ -111,7 +225,65 @@ const TopicsPage = {
         });
         
         this.deleteZone = document.getElementById('delete-zone');
+        this.archiveButton = document.getElementById('btn-archive');
+        
+        // Botones del header
+        document.getElementById('btn-stats')?.addEventListener('click', () => {
+            this.switchToMode(this.currentViewMode === 'STATS' ? 'TOPICS' : 'STATS');
+        });
+        
+        document.getElementById('btn-archive')?.addEventListener('click', () => {
+            this.switchToMode(this.currentViewMode === 'ARCHIVED' ? 'TOPICS' : 'ARCHIVED');
+        });
+        
+        // Actualizar UI del header según el modo actual
+        this.updateHeaderUI();
+        
         this.setupDragAndDrop();
+    },
+    
+    /**
+     * Cambia el modo de vista
+     */
+    async switchToMode(mode) {
+        this.currentViewMode = mode;
+        await this.loadTopics();
+        App.loadPage('topics');
+    },
+    
+    /**
+     * Actualiza la UI del header según el modo
+     */
+    updateHeaderUI() {
+        const title = document.getElementById('topics-title');
+        const btnStats = document.getElementById('btn-stats');
+        const btnArchive = document.getElementById('btn-archive');
+        
+        if (title) {
+            switch (this.currentViewMode) {
+                case 'TOPICS':
+                    title.textContent = 'Temas';
+                    break;
+                case 'ARCHIVED':
+                    title.textContent = 'Archivados';
+                    break;
+                case 'STATS':
+                    title.textContent = 'Estadísticas';
+                    break;
+            }
+        }
+        
+        // En modo TOPICS ambos botones visibles
+        // En otros modos, solo visible el botón de volver
+        if (btnStats && btnArchive) {
+            if (this.currentViewMode === 'TOPICS') {
+                btnStats.style.visibility = 'visible';
+                btnArchive.style.visibility = 'visible';
+            } else {
+                btnStats.style.visibility = 'hidden';
+                btnArchive.style.visibility = 'hidden';
+            }
+        }
     },
     
     /**
@@ -296,16 +468,57 @@ const TopicsPage = {
         this.dragClone.style.left = (clientX - this.dragClone.offsetWidth / 2) + 'px';
         this.dragClone.style.top = (clientY - this.dragClone.offsetHeight / 2) + 'px';
         
+        // Verificar si está sobre zona de archivo (solo en modo TOPICS)
+        if (this.archiveButton && this.currentViewMode === 'TOPICS') {
+            const archiveRect = this.archiveButton.getBoundingClientRect();
+            // Crear área expandida
+            const expandedRect = {
+                left: archiveRect.left - 30,
+                right: archiveRect.right + 30,
+                top: archiveRect.top - 30,
+                bottom: archiveRect.bottom + 30
+            };
+            
+            const wasOverArchive = this.isOverArchiveZone;
+            this.isOverArchiveZone = clientX >= expandedRect.left && clientX <= expandedRect.right &&
+                                     clientY >= expandedRect.top && clientY <= expandedRect.bottom;
+            
+            if (this.isOverArchiveZone !== wasOverArchive) {
+                if (this.isOverArchiveZone) {
+                    this.archiveButton.classList.add('drag-over');
+                    this.dragClone.classList.add('over-archive');
+                    if (navigator.vibrate) navigator.vibrate(30);
+                } else {
+                    this.archiveButton.classList.remove('drag-over');
+                    this.dragClone.classList.remove('over-archive');
+                }
+            }
+        }
+        
         // Verificar si está sobre zona de eliminación
         if (this.deleteZone) {
             const deleteRect = this.deleteZone.getBoundingClientRect();
-            this.isOverDeleteZone = clientY >= deleteRect.top - 20;
-            this.deleteZone.classList.toggle('active', this.isOverDeleteZone);
-            this.dragClone.classList.toggle('over-delete', this.isOverDeleteZone);
+            // Área expandida para la papelera
+            const expandedDeleteRect = {
+                left: deleteRect.left - 40,
+                right: deleteRect.right + 40,
+                top: deleteRect.top - 40,
+                bottom: deleteRect.bottom + 40
+            };
+            
+            const wasOverDelete = this.isOverDeleteZone;
+            this.isOverDeleteZone = clientX >= expandedDeleteRect.left && clientX <= expandedDeleteRect.right &&
+                                    clientY >= expandedDeleteRect.top && clientY <= expandedDeleteRect.bottom;
+            
+            if (this.isOverDeleteZone !== wasOverDelete) {
+                this.deleteZone.classList.toggle('active', this.isOverDeleteZone);
+                this.dragClone.classList.toggle('over-delete', this.isOverDeleteZone);
+                if (this.isOverDeleteZone && navigator.vibrate) navigator.vibrate(30);
+            }
         }
         
-        // Si no está sobre zona de eliminación, reorganizar items
-        if (!this.isOverDeleteZone) {
+        // Si no está sobre ninguna zona, reorganizar items
+        if (!this.isOverDeleteZone && !this.isOverArchiveZone) {
             this.updateItemPositions(clientY);
         }
     },
@@ -351,10 +564,14 @@ const TopicsPage = {
     async endDrag() {
         if (!this.isDragging) return;
         
-        // Ocultar zona de eliminación
+        // Ocultar zona de eliminación y reset archive button
         this.deleteZone?.classList.remove('visible', 'active');
+        this.archiveButton?.classList.remove('drag-over');
         
-        if (this.isOverDeleteZone) {
+        if (this.isOverArchiveZone && this.currentViewMode === 'TOPICS') {
+            // Archivar tema
+            await this.archiveTopic(this.draggedTopicId);
+        } else if (this.isOverDeleteZone) {
             // Eliminar tema
             this.confirmDeleteTopic(this.draggedTopicId);
         } else {
@@ -375,6 +592,7 @@ const TopicsPage = {
      */
     cancelDrag() {
         this.deleteZone?.classList.remove('visible', 'active');
+        this.archiveButton?.classList.remove('drag-over');
         this.cleanupDrag();
     },
     
@@ -400,6 +618,7 @@ const TopicsPage = {
         this.draggedElement = null;
         this.draggedTopicId = null;
         this.isOverDeleteZone = false;
+        this.isOverArchiveZone = false;
     },
     
     /**
@@ -415,18 +634,17 @@ const TopicsPage = {
     },
     
     /**
-     * Confirma eliminación de tema
+     * Confirma eliminación de tema (desde drag)
      */
     async confirmDeleteTopic(topicId) {
         const topic = await db.getTopicById(topicId);
         if (!topic) {
-            this.cleanupDrag();
             return;
         }
         
         showConfirm(
-            'Eliminar tema',
-            `¿Estás seguro de que quieres eliminar "${escapeHtml(topic.name)}"?`,
+            '¿Eliminar definitivamente?',
+            `Se perderán todas las estadísticas de "${escapeHtml(topic.name)}". Esta acción no se puede deshacer.`,
             async () => {
                 await this.deleteTopic(topicId);
             },
@@ -436,11 +654,24 @@ const TopicsPage = {
     },
 
     /**
-     * Carga los temas
+     * Carga los temas según el modo actual
      */
     async loadTopics() {
         try {
-            this.topics = await db.getAllTopics();
+            switch (this.currentViewMode) {
+                case 'ARCHIVED':
+                    this.topics = await db.getArchivedTopics();
+                    break;
+                case 'STATS':
+                    this.allTopicsForStats = await db.getAllTopicsIncludingArchived();
+                    this.topics = []; // No necesitamos lista para stats
+                    break;
+                case 'TOPICS':
+                default:
+                    const allTopics = await db.getAllTopics();
+                    this.topics = allTopics.filter(t => !t.isArchived);
+                    break;
+            }
         } catch (error) {
             console.error('Error loading topics:', error);
             this.topics = [];
@@ -526,6 +757,10 @@ const TopicsPage = {
         const topic = await db.getTopicById(topicId);
         if (!topic) return;
         
+        // Botón de acción diferente según si está archivado o no
+        const actionButtonText = topic.isArchived ? 'Restaurar' : 'Reiniciar Ciclo';
+        const actionButtonColor = topic.isArchived ? 'var(--color-primary)' : 'var(--color-warning)';
+        
         const content = `
             <div class="modal-header">
                 <h2 class="modal-title">Editar tema</h2>
@@ -558,6 +793,7 @@ const TopicsPage = {
             </div>
             <div class="modal-footer">
                 <button class="btn btn-text" style="color: var(--color-error);" id="btn-delete-topic">Eliminar</button>
+                <button class="btn btn-text" style="color: ${actionButtonColor};" id="btn-action-topic">${actionButtonText}</button>
                 <button class="btn btn-text" onclick="hideModal()">Cancelar</button>
                 <button class="btn btn-primary" id="btn-update-topic">Guardar</button>
             </div>
@@ -582,6 +818,17 @@ const TopicsPage = {
         document.getElementById('btn-delete-topic').onclick = () => {
             hideModal();
             this.showDeleteConfirmation(topicId);
+        };
+        
+        document.getElementById('btn-action-topic').onclick = async () => {
+            if (topic.isArchived) {
+                // Restaurar
+                await this.unarchiveTopic(topicId);
+                hideModal();
+            } else {
+                // Reiniciar ciclo
+                this.showResetCycleConfirmation(topic);
+            }
         };
     },
 
@@ -620,14 +867,60 @@ const TopicsPage = {
         if (!topic) return;
         
         showConfirm(
-            'Eliminar tema',
-            `¿Estás seguro de que quieres eliminar "${escapeHtml(topic.name)}"?`,
+            '¿Eliminar definitivamente?',
+            `Se perderán todas las estadísticas de "${escapeHtml(topic.name)}". Esta acción no se puede deshacer.`,
             async () => {
                 await this.deleteTopic(topicId);
             },
             'Eliminar',
             'Cancelar'
         );
+    },
+    
+    /**
+     * Muestra confirmación de reinicio de ciclo
+     */
+    showResetCycleConfirmation(topic) {
+        showConfirm(
+            '¿Reiniciar vuelta de estudio?',
+            'El contador de tiempo de este tema se pondrá a 0 para empezar una nueva vuelta. El tiempo total histórico se conservará.',
+            async () => {
+                await db.resetTopicCurrentPeriod(topic.id);
+                showToast('Ciclo reiniciado', 'success');
+                hideModal();
+                App.loadPage('topics');
+            },
+            'Reiniciar',
+            'Cancelar'
+        );
+    },
+    
+    /**
+     * Archiva un tema
+     */
+    async archiveTopic(topicId) {
+        try {
+            await db.setTopicArchived(topicId, true);
+            showToast('Tema archivado', 'success');
+            App.loadPage('topics');
+        } catch (error) {
+            console.error('Error archiving topic:', error);
+            showToast('Error al archivar tema', 'error');
+        }
+    },
+    
+    /**
+     * Restaura un tema archivado
+     */
+    async unarchiveTopic(topicId) {
+        try {
+            await db.setTopicArchived(topicId, false);
+            showToast('Tema restaurado a la lista principal', 'success');
+            App.loadPage('topics');
+        } catch (error) {
+            console.error('Error unarchiving topic:', error);
+            showToast('Error al restaurar tema', 'error');
+        }
     },
 
     /**

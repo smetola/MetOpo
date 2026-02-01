@@ -55,6 +55,15 @@ const App = {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
                 const page = item.dataset.page;
+
+                // Si pulsamos en Temas y ya estamos en Temas (pero en una subvista), volver al inicio
+                if (page === 'topics' && this.currentPage === 'topics') {
+                    if (typeof TopicsPage !== 'undefined' && TopicsPage.currentViewMode !== 'TOPICS') {
+                        TopicsPage.switchToMode('TOPICS');
+                        return;
+                    }
+                }
+
                 if (page) {
                     this.loadPage(page);
                 }
@@ -67,6 +76,8 @@ const App = {
      */
     async loadPage(pageName) {
         const mainContent = document.getElementById('main-content');
+         
+        this.currentPage = pageName;
         
         if (!mainContent) return;
         
@@ -100,6 +111,8 @@ const App = {
                     html = await StudyPage.render();
                     break;
                 case 'topics':
+                    // En Temas ocultamos el header global porque usamos uno personalizado
+                    hideHeader = true; 
                     title = 'Temas';
                     subtitle = 'Gestiona tu temario';
                     showSubtitle = true;
